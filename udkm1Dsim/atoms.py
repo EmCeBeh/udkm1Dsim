@@ -43,7 +43,7 @@ class Atom:
     Keyword Args:
         id (str): id of the atom
         ionicity (int): ionicity of the atom
-        atomic_form_factor_path (str): path to atomic form factor coeffs
+        atomic_form_factors (str): datafiles for atomic factors: 'chantler' (default), 'henke', or path to folder with own data
         magnetic_form_factor_path (str): path to magnetic form factor coeffs
 
     Attributes:
@@ -77,6 +77,11 @@ class Atom:
            Transmission, and Reflection at E = 50-30,000 eV, Z = 1-92.
            `Atomic Data and Nuclear Data Tables, 54(2), 181–342.
            <http://www.doi.org/10.1006/adnd.1993.1013>`_
+        .. [4] C.T. Chantler,1 K. Olsen, R.A. Dragoset, J. Chang,
+           A.R. Kishore, S.A. Kotochigova, and D.S. Zucker. 
+           X-Ray Form Factor, Attenuation, and Scattering Tables
+           NIST, Physical Measurement Laboratory
+           <https://dx.doi.org/10.18434/T4HS32>
 
     """
 
@@ -105,7 +110,7 @@ class Atom:
         self._mass = self.mass_number_a*constants.atomic_mass
         self.mass = self._mass*u.kg
         self.atomic_form_factor_coeff = self.read_atomic_form_factor_coeff(
-            filename=kwargs.get('atomic_form_factor_path', ''))
+            data=kwargs.get('atomic_form_factors', ''))
         self.magnetic_form_factor_coeff = self.read_magnetic_form_factor_coeff(
             filename=kwargs.get('magnetic_form_factor_path', ''))
         self.cromer_mann_coeff = self.read_cromer_mann_coeff()
@@ -125,17 +130,24 @@ class Atom:
         return 'Atom with the following properties\n' + \
                tabulate(output, colalign=('right',), tablefmt="rst", floatfmt=('.2f', '.2f'))
 
-    def read_atomic_form_factor_coeff(self, filename=''):
+    def read_atomic_form_factor_coeff(self, data = ''):
         """read_atomic_form_factor_coeff
 
         The atomic form factor :math:`f` in dependence from the energy
         :math:`E` is read from a parameter file given by [3]_.
 
         """
-        if not filename:
+        if data = 'chantler':
             filename = os.path.join(os.path.dirname(__file__),
                                     'parameters/atomic_form_factors/chantler/{:s}.cf'.format(
                                             self.symbol.lower()))
+        elif data = 'henke':
+            filename = os.path.join(os.path.dirname(__file__),
+                                    'parameters/atomic_form_factors/henke/{:s}.cf'.format(
+                                            self.symbol.lower()))
+        else:
+            filename = data
+
         try:
             f = np.genfromtxt(filename, skip_header=0)
         except Exception as e:
